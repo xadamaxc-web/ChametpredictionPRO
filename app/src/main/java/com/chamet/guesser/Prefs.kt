@@ -146,7 +146,6 @@ object Prefs {
         if (total == 0) return null
         return roadManualCount(ctx) * 100.0 / total
     }
-}
 
     // ---- Session 9: controller ----
     /** auto = capture freely; manual = user taps floating button only */
@@ -173,4 +172,4 @@ object Prefs {
     fun stakeCapPercent(ctx: Context): Int = p(ctx).getInt("stakeCapPercent", 7)
     fun setStakeCapPercent(ctx: Context, v: Int) =
         p(ctx).edit().putInt("stakeCapPercent", v.coerceIn(1, 20)).apply()
-
+}
