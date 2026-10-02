@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0A0A1E"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp"
+    android:paddingBottom="4dp">
+
+    <!-- Top: title + balance + X -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Chamet Guesser"
+            android:textColor="#FCA311"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Button android:id="@+id/btnExport" android:layout_width="34dp" android:layout_height="28dp"
+            android:layout_toStartOf="@+id/btnBalance" android:layout_centerVertical="true"
+            android:layout_marginEnd="6dp" android:text="💾" android:textSize="12sp"
+            android:textColor="#FFFFFF" android:background="@drawable/btn_neutral" android:padding="0dp" />
+
+        <TextView
+            android:id="@+id/btnBalance"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_toStartOf="@+id/btnCloseX"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="💎 100000"
+            android:textColor="#FCA311"
+            android:textSize="11sp"
+            android:background="@drawable/card_bg" />
+
+        <TextView
+            android:id="@+id/btnCloseX"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="#8A8A9E"
+            android:textSize="14sp" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tvState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="● BETTING"
+        android:textColor="#2A9D8F"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp" />
+
+    <TextView
+        android:id="@+id/tvGlance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/card_bg"
+        android:text="Pick — · — · 0 💎"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="6dp"
+        android:layout_marginBottom="2dp" />
+
+    <TextView
+        android:id="@+id/tvUnrecorded"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#B71C1C"
+        android:text="⚠ Last round unrecorded — tap WON / LOST / NO BET"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="3dp"
+        android:visibility="gone" />
+
+    <HorizontalScrollView
+        android:id="@+id/dropdownScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/dropdownArea"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#131B2E"
+            android:padding="3dp" />
+    </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/tvPrompt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FCA311"
+        android:textSize="10sp"
+        android:gravity="center"
+        android:visibility="gone"
+        android:padding="1dp" />
+
+    <TextView
+        android:id="@+id/tvConfidence"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pick revealed road (R1/R2/R3)"
+        android:textColor="#8A8A9E"
+        android:textSize="10sp"
+        android:gravity="center"
+        android:padding="2dp"
+        android:background="#131B2E"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Row 1: R1 R2 R3 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="2dp">
+
+        <Button android:id="@+id/btnR1" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="1" android:text="R1 ???" android:textSize="9sp"
+            android:textColor="#FCA311" android:background="@drawable/card_bg"
+            android:padding="1dp" android:layout_marginEnd="2dp" />
+        <Button android:id="@+id/btnR2" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="1" android:text="R2 ???" android:textSize="9sp"
+            android:textColor="#8A8A9E" android:background="@drawable/card_bg"
+            android:padding="1dp" android:layout_marginEnd="2dp" />
+        <Button android:id="@+id/btnR3" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="1" android:text="R3 ???" android:textSize="9sp"
+            android:textColor="#8A8A9E" android:background="@drawable/card_bg"
+            android:padding="1dp" />
+    </LinearLayout>
+
+    <!-- Row 2: car slots (left to right) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="2dp">
+
+        <!-- 1st (leftmost) -->
+        <LinearLayout
+            android:id="@+id/slotV1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="2dp"
+            android:layout_marginEnd="2dp">
+            <ImageView android:id="@+id/ivCar1" android:layout_width="match_parent"
+                android:layout_height="56dp" android:scaleType="fitCenter"
+                android:adjustViewBounds="true" />
+            <Button android:id="@+id/btnV1" android:layout_width="match_parent"
+                android:layout_height="28dp" android:text="1st —" android:textSize="10sp"
+                android:textColor="#FCA311" android:background="@android:color/transparent"
+                android:padding="0dp" />
+            <TextView android:id="@+id/tvOdds1" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="— · —"
+                android:textSize="8sp" android:textColor="#8A8A9E" android:gravity="center" />
+            <TextView android:id="@+id/tvBet1" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text=""
+                android:textSize="8sp" android:textColor="#FCA311" android:gravity="center" />
+        </LinearLayout>
+
+        <!-- 2nd (middle) -->
+        <LinearLayout
+            android:id="@+id/slotV2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="2dp"
+            android:layout_marginEnd="2dp">
+            <ImageView android:id="@+id/ivCar2" android:layout_width="match_parent"
+                android:layout_height="56dp" android:scaleType="fitCenter"
+                android:adjustViewBounds="true" />
+            <Button android:id="@+id/btnV2" android:layout_width="match_parent"
+                android:layout_height="28dp" android:text="2nd —" android:textSize="10sp"
+                android:textColor="#FFFFFF" android:background="@android:color/transparent"
+                android:padding="0dp" />
+            <TextView android:id="@+id/tvOdds2" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="— · —"
+                android:textSize="8sp" android:textColor="#8A8A9E" android:gravity="center" />
+            <TextView android:id="@+id/tvBet2" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text=""
+                android:textSize="8sp" android:textColor="#FCA311" android:gravity="center" />
+        </LinearLayout>
+
+        <!-- 3rd (rightmost) -->
+        <LinearLayout
+            android:id="@+id/slotV3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="2dp">
+            <ImageView android:id="@+id/ivCar3" android:layout_width="match_parent"
+                android:layout_height="56dp" android:scaleType="fitCenter"
+                android:adjustViewBounds="true" />
+            <Button android:id="@+id/btnV3" android:layout_width="match_parent"
+                android:layout_height="28dp" android:text="3rd —" android:textSize="10sp"
+                android:textColor="#FFFFFF" android:background="@android:color/transparent"
+                android:padding="0dp" />
+            <TextView android:id="@+id/tvOdds3" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="— · —"
+                android:textSize="8sp" android:textColor="#8A8A9E" android:gravity="center" />
+            <TextView android:id="@+id/tvBet3" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text=""
+                android:textSize="8sp" android:textColor="#FCA311" android:gravity="center" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Row 3: ↕️ 🔄 🔒 | WON LOST NO BET (a recorded result auto-advances) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button android:id="@+id/btnOrder" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="0.6" android:text="↕️" android:textSize="14sp"
+            android:textColor="#FFFFFF" android:background="@drawable/btn_neutral"
+            android:padding="0dp" android:layout_marginEnd="2dp" />
+        <Button android:id="@+id/btnRefreshOdds" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="0.6" android:text="🔄" android:textSize="14sp"
+            android:textColor="#FFFFFF" android:background="@drawable/btn_neutral"
+            android:padding="0dp" android:layout_marginEnd="2dp" />
+        <Button android:id="@+id/btnLock" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="0.6" android:text="🔒" android:textSize="14sp"
+            android:textColor="#000000" android:background="@drawable/btn_accent"
+            android:padding="0dp" android:layout_marginEnd="4dp" />
+
+        <Button android:id="@+id/btnWon" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="0.85" android:text="WON" android:textSize="10sp"
+            android:textColor="#000000" android:background="@drawable/btn_win"
+            android:enabled="false" android:alpha="0.45" android:padding="0dp"
+            android:layout_marginEnd="2dp" />
+        <Button android:id="@+id/btnLost" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="0.85" android:text="LOST" android:textSize="10sp"
+            android:textColor="#FFFFFF" android:background="@drawable/btn_lose"
+            android:enabled="false" android:alpha="0.45" android:padding="0dp"
+            android:layout_marginEnd="2dp" />
+        <Button android:id="@+id/btnNoBet" android:layout_width="0dp" android:layout_height="34dp"
+            android:layout_weight="1" android:text="NO BET" android:textSize="9sp"
+            android:textColor="#FFFFFF" android:background="@drawable/btn_neutral"
+            android:enabled="false" android:alpha="0.45" android:padding="0dp" />
+    </LinearLayout>
+
+</LinearLayout>

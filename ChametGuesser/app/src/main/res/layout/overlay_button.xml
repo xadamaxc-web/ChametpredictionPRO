@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="60dp"
+    android:layout_height="60dp"
+    android:background="@drawable/overlay_button_bg"
+    android:alpha="0.85">
+
+    <ImageView
+        android:id="@+id/ivButton"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:contentDescription="Capture"
+        android:tint="@color/bg_dark" />
+
+</FrameLayout>

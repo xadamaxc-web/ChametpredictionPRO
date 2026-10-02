@@ -1,0 +1,44 @@
+{
+  "version": "8.1.0",
+  "simulations": 2000,
+  "defaultSeed": 42,
+  "roads": ["Highway", "Expressway", "Dirt", "Bumpy", "Potholes", "Desert"],
+  "speeds": {
+    "Supercar": {"Highway": 320, "Expressway": 280, "Dirt": 100, "Bumpy": 60, "Potholes": 32, "Desert": 40},
+    "Sports Car": {"Highway": 240, "Expressway": 220, "Dirt": 120, "Bumpy": 66, "Potholes": 36, "Desert": 45},
+    "Car": {"Highway": 180, "Expressway": 200, "Dirt": 130, "Bumpy": 75, "Potholes": 45, "Desert": 50},
+    "SUV": {"Highway": 143, "Expressway": 180, "Dirt": 134, "Bumpy": 76, "Potholes": 48, "Desert": 57},
+    "Stock Car": {"Highway": 100, "Expressway": 150, "Dirt": 80, "Bumpy": 80, "Potholes": 60, "Desert": 80},
+    "ORV": {"Highway": 112, "Expressway": 140, "Dirt": 92, "Bumpy": 91, "Potholes": 49, "Desert": 70},
+    "Monster Truck": {"Highway": 99, "Expressway": 120, "Dirt": 66, "Bumpy": 99, "Potholes": 77, "Desert": 55},
+    "Motorcycle": {"Highway": 89, "Expressway": 110, "Dirt": 81, "Bumpy": 81, "Potholes": 68, "Desert": 63},
+    "ATV": {"Highway": 80, "Expressway": 100, "Dirt": 76, "Bumpy": 72, "Potholes": 72, "Desert": 72}
+  },
+  "roadFamilies": {
+    "Dirt": ["Dirt", "Dirt", "Bumpy", "Potholes", "Bumpy", "Dirt"],
+    "Bumpy": ["Bumpy", "Bumpy", "Dirt", "Potholes", "Dirt", "Desert"],
+    "Potholes": ["Potholes", "Potholes", "Dirt", "Bumpy", "Dirt", "Desert"],
+    "Desert": ["Desert", "Desert", "Dirt", "Bumpy", "Potholes", "Desert"],
+    "Highway": ["Highway", "Highway", "Expressway", "Dirt", "Expressway", "Highway"],
+    "Expressway": ["Expressway", "Expressway", "Highway", "Dirt", "Highway", "Desert"]
+  },
+  "lengthPriorPx": [
+    {"type": "Desert", "px": 870},
+    {"type": "Highway", "px": 118},
+    {"type": "Highway", "px": 167},
+    {"type": "Expressway", "px": 98},
+    {"type": "Desert", "px": 722},
+    {"type": "Desert", "px": 98},
+    {"type": "Bumpy", "px": 415},
+    {"type": "Desert", "px": 475},
+    {"type": "Desert", "px": 500},
+    {"type": "Dirt", "px": 300},
+    {"type": "Potholes", "px": 250},
+    {"type": "Bumpy", "px": 200},
+    {"type": "Expressway", "px": 150},
+    {"type": "Highway", "px": 400}
+  ],
+  "trackWidthPx": 990,
+  "segmentCountMin": 2,
+  "segmentCountMax": 3
+}

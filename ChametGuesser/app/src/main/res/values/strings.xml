@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Chamet Guesser</string>
+
+    <!-- Main screen -->
+    <string name="title">Chamet Race Guesser</string>
+    <string name="subtitle">Overlay tool for the Chamet Race mini-game</string>
+
+    <string name="btn_grant_overlay">1. Grant Overlay Permission</string>
+    <string name="btn_capture_permission">2. Grant Screen Capture</string>
+    <string name="btn_start_overlay">3. Start Floating Button</string>
+    <string name="btn_stop_overlay">Stop Floating Button</string>
+
+    <string name="status_overlay_on">✅ Overlay permission granted</string>
+    <string name="status_overlay_off">❌ Overlay permission not granted</string>
+    <string name="status_capture_on">✅ Screen capture granted</string>
+    <string name="status_capture_off">❌ Screen capture not granted</string>
+
+    <!-- Overlay result -->
+    <string name="label_confidence">CONFIDENCE</string>
+    <string name="label_rank1">Rank 1</string>
+    <string name="label_rank2">Rank 2</string>
+    <string name="label_rank3">Rank 3</string>
+    <string name="btn_won">✅ WON</string>
+    <string name="btn_lost">❌ LOST</string>
+
+    <!-- Road picker -->
+    <string name="label_pick_road">Tap the revealed road</string>
+
+    <!-- Mode logger -->
+    <string name="label_mode">Mode observed</string>
+    <string name="mode_n">N</string>
+    <string name="mode_r">R</string>
+    <string name="mode_2">2</string>
+    <string name="mode_3">3</string>
+</resources>

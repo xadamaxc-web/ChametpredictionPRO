@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0A1E"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textColor="#FCA311"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="OCR Mode"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/rgOcrMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton android:id="@+id/rbMlkit" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="On-device only (ML Kit)"
+                android:textColor="#FFFFFF" />
+            <RadioButton android:id="@+id/rbHybrid" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="On-device + AI fallback (default)"
+                android:textColor="#FFFFFF" android:checked="true" />
+            <RadioButton android:id="@+id/rbAi" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="AI only"
+                android:textColor="#FFFFFF" />
+        </RadioGroup>
+
+        <!-- Slot 1 Gemini -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="1. Gemini" android:textColor="#FCA311" android:textStyle="bold" />
+        <CheckBox android:id="@+id/cbSlot1" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Enabled" android:textColor="#FFFFFF"
+            android:checked="true" />
+        <EditText android:id="@+id/etKey1" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="API key"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:inputType="textPassword" android:background="#131B2E"
+            android:padding="10dp" android:layout_marginBottom="6dp" />
+        <EditText android:id="@+id/etModel1" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="Model (gemini-2.0-flash)"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:background="#131B2E" android:padding="10dp" android:layout_marginBottom="6dp" />
+        <Button android:id="@+id/btnTest1" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Test Gemini"
+            android:backgroundTint="#4A4A6E" android:layout_marginBottom="16dp" />
+
+        <!-- Slot 2 Groq -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="2. Groq" android:textColor="#FCA311" android:textStyle="bold" />
+        <CheckBox android:id="@+id/cbSlot2" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Enabled" android:textColor="#FFFFFF" />
+        <EditText android:id="@+id/etKey2" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="API key"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:inputType="textPassword" android:background="#131B2E"
+            android:padding="10dp" android:layout_marginBottom="6dp" />
+        <EditText android:id="@+id/etModel2" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="Model"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:background="#131B2E" android:padding="10dp" android:layout_marginBottom="6dp" />
+        <Button android:id="@+id/btnTest2" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Test Groq"
+            android:backgroundTint="#4A4A6E" android:layout_marginBottom="16dp" />
+
+        <!-- Slot 3 OpenRouter -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="3. OpenRouter" android:textColor="#FCA311" android:textStyle="bold" />
+        <CheckBox android:id="@+id/cbSlot3" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Enabled" android:textColor="#FFFFFF" />
+        <EditText android:id="@+id/etKey3" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="API key"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:inputType="textPassword" android:background="#131B2E"
+            android:padding="10dp" android:layout_marginBottom="6dp" />
+        <EditText android:id="@+id/etModel3" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="Model (qwen VL free)"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:background="#131B2E" android:padding="10dp" android:layout_marginBottom="6dp" />
+        <Button android:id="@+id/btnTest3" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Test OpenRouter"
+            android:backgroundTint="#4A4A6E" android:layout_marginBottom="16dp" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Overlay" android:textColor="#FCA311" android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+        <CheckBox android:id="@+id/cbAutoHide" android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Only show overlay in Chamet apps"
+            android:textColor="#FFFFFF" android:checked="true" />
+        <Button android:id="@+id/btnUsageAccess" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Grant Usage Access"
+            android:backgroundTint="#4A4A6E" android:layout_marginBottom="8dp" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Math" android:textColor="#FCA311" android:textStyle="bold" />
+        <CheckBox android:id="@+id/cbPositionBias" android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Use position bias from history (30+ rounds)"
+            android:textColor="#FFFFFF" android:checked="true"
+            android:layout_marginBottom="12dp" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Controller (Session 9)" android:textColor="#FCA311" android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+        <CheckBox android:id="@+id/cbObserveOnly" android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Observe-only (record + predict, no stake)"
+            android:textColor="#FFFFFF" />
+        <CheckBox android:id="@+id/cbCapturePaused" android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pause capture (calls / away)"
+            android:textColor="#FFFFFF" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Min confidence for stake (0–100)" android:textColor="#FFFFFF"
+            android:textSize="12sp" android:layout_marginTop="6dp" />
+        <EditText android:id="@+id/etMinConf" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:inputType="number"
+            android:textColor="#FFFFFF" android:background="#131B2E" android:padding="10dp"
+            android:layout_marginBottom="6dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Stake cap % of balance (default 7)" android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+        <EditText android:id="@+id/etStakeCap" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:inputType="number"
+            android:textColor="#FFFFFF" android:background="#131B2E" android:padding="10dp"
+            android:layout_marginBottom="12dp" />
+        <Button android:id="@+id/btnLearn" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Learn from logs (local)"
+            android:backgroundTint="#4A4A6E" android:layout_marginBottom="6dp" />
+        <Button android:id="@+id/btnRollback" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Rollback params"
+            android:backgroundTint="#4A4A6E" android:layout_marginBottom="12dp" />
+
+        <Button android:id="@+id/btnSave" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Save"
+            android:backgroundTint="#FCA311" android:textColor="#000000" />
+    </LinearLayout>
+</ScrollView>
