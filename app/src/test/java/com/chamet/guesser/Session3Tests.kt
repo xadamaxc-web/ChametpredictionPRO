@@ -10,7 +10,7 @@ import org.junit.Test
  */
 class Session3Tests {
 
-    private var clock = 0L
+    private var clock = 1_000L  // non-zero: 0 is the "unset" sentinel in the machine
     private fun machine(
         raceMs: Long = 15_000L,
         finishMs: Long = 6_000L,
@@ -49,9 +49,7 @@ class Session3Tests {
         m.onEvent(RoundStateMachine.Event.RACE_STARTED)
         assertEquals(RoundStateMachine.CaptureAction.STRIP_ONCE, m.snapshot().action)
         m.markStripCaptured()
-        assertEquals(RoundStateMachine.CaptureAction.NONE, m.snapshot().action)
-
-        clock += 250
+        // first track sample is due immediately after the strip read
         assertEquals(RoundStateMachine.CaptureAction.TRACK_SAMPLE, m.snapshot().action)
         m.markTrackSampled()
         assertEquals(RoundStateMachine.CaptureAction.NONE, m.snapshot().action)

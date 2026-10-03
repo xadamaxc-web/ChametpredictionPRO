@@ -54,9 +54,11 @@ class Session8Tests {
         // Force near-zero win on all by using empty winProb equal → EV = 1.0 exactly on 3-way.
         // Use a huge pool on the favourite so EV < 1 for others and top still < 1 with low p.
         val cars = listOf("A", "B", "C")
-        val pools = mapOf("A" to 10_000_000L, "B" to 100L, "C" to 100L)
-        // pWin all equal → EV_A = (total/poolA)*(1/3) ≈ 1.0 * 0.33 < 1
-        val advice = OddsEngine.compute(cars, pools, 80, 100_000L, emptyMap())
+        // C has no pool (odds 0 → EV 0) but gets most of the win probability;
+        // A and B have fair pools with low win probability → every EV < 1.
+        val pools = mapOf("A" to 100L, "B" to 100L, "C" to 0L)
+        val winProb = mapOf("A" to 0.1, "B" to 0.1, "C" to 0.8)
+        val advice = OddsEngine.compute(cars, pools, 80, 100_000L, winProb)
         assertEquals(0, advice.totalBet)
         assertTrue(advice.warning?.contains("EV") == true || advice.warning?.contains("Skip") == true)
     }

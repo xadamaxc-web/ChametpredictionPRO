@@ -13,14 +13,15 @@ import org.junit.Test
 class Session345Tests {
 
     @Test fun raceLoopStripThenTrackThenRecheck() {
-        var t = 0L
+        var t = 1_000L // non-zero: 0 is the "unset" sentinel in the controller
         val c = RaceLoopController(trackIntervalMs = 250L, stripRecheckAfterMs = 1_000L, nowMs = { t })
         c.onRaceStarted()
         assertEquals(RaceLoopController.Work.STRIP, c.nextWork(true))
+        assertEquals(RaceLoopController.Work.TRACK, c.nextWork(true)) // first track sample
         assertEquals(RaceLoopController.Work.NONE, c.nextWork(true)) // same instant
-        t = 250
+        t = 1_250
         assertEquals(RaceLoopController.Work.TRACK, c.nextWork(true))
-        t = 1_000
+        t = 2_000
         // after track interval also recheck once
         val w = c.nextWork(true)
         assertTrue(w == RaceLoopController.Work.STRIP_RECHECK || w == RaceLoopController.Work.TRACK)
