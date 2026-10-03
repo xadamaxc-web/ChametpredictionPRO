@@ -49,7 +49,9 @@ class Session3Tests {
         m.onEvent(RoundStateMachine.Event.RACE_STARTED)
         assertEquals(RoundStateMachine.CaptureAction.STRIP_ONCE, m.snapshot().action)
         m.markStripCaptured()
-        // first track sample is due immediately after the strip read
+        assertEquals(RoundStateMachine.CaptureAction.NONE, m.snapshot().action)
+
+        clock += 250
         assertEquals(RoundStateMachine.CaptureAction.TRACK_SAMPLE, m.snapshot().action)
         m.markTrackSampled()
         assertEquals(RoundStateMachine.CaptureAction.NONE, m.snapshot().action)
