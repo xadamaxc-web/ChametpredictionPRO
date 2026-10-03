@@ -1,17 +1,52 @@
 name: Build APK
-on: [push, workflow_dispatch]
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
-      - run: chmod +x gradlew
-      - run: ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          cmdline-tools-version: 11076708
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew || echo "no gradlew yet"
+
+      - name: Unit tests
+        run: |
+          if [ -f ./gradlew ]; then
+            ./gradlew testDebugUnitTest --no-daemon
+          else
+            gradle testDebugUnitTest --no-daemon
+          fi
+
+      - name: Build Debug APK
+        run: |
+          if [ -f ./gradlew ]; then
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle assembleDebug --no-daemon
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChametGuesser-8.3.1-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

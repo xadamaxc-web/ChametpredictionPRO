@@ -71,13 +71,12 @@ object Backtester {
             val road = AnalyticsStats.roadOf(r).takeIf { RoadMatcher.isKnown(it) } ?: "Desert"
             val winner = r.winner
 
-            // Current engine
-            val segs = LocalLearner.segmentsOf(r).takeIf { it.size >= 2 }
+            // Current engine — pre-bet path only (no post-race layout look-ahead)
             val curGuess = Guesser.guess(
                 revealedRoad = road,
                 offeredCars = cars,
                 poolByCar = pools,
-                knownSegments = segs,
+                knownSegments = null,
                 seed = seed
             )
             if (curGuess != null) {
@@ -113,8 +112,8 @@ object Backtester {
         return Report(
             current = current,
             legacy = legacy,
-            currentBeatsWinRate = current.winPct >= legacy.winPct && current.bets > 0,
-            currentBeatsProfit = current.profit >= legacy.profit && current.bets > 0
+            currentBeatsWinRate = current.winPct > legacy.winPct && current.bets > 0,
+            currentBeatsProfit = current.profit > legacy.profit && current.bets > 0
         )
     }
 

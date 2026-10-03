@@ -58,22 +58,41 @@ Rules:
 - Return ONLY JSON, no markdown.
 """
 
-    suspend fun analyze(context: Context, bitmap: Bitmap): AiResult? = withContext(Dispatchers.IO) {
+    private const val PROMPT_ROAD_ONLY = """Read this Chamet Race ROAD BANNER crop (top of screen). Return ONLY JSON:
+{
+  "revealed_road_position": 2,
+  "revealed_road_name": "Highway",
+  "cars": [],
+  "total_pool": 0,
+  "balance": null
+}
+Rules:
+- The yellow banner shows the REVEALED road name (Dirt, Bumpy, Potholes, Desert, Highway, Expressway).
+- Banner horizontal placement: left third→1, middle→2, right→3.
+- Return ONLY JSON, no markdown.
+"""
+
+    suspend fun analyze(
+        context: Context,
+        bitmap: Bitmap,
+        roadOnly: Boolean = false
+    ): AiResult? = withContext(Dispatchers.IO) {
         val b64 = bitmapToBase64(bitmap)
+        val prompt = if (roadOnly) PROMPT_ROAD_ONLY else PROMPT
         for (i in 1..3) {
             val slot = Prefs.slot(context, i)
             if (!slot.enabled || slot.apiKey.isBlank()) continue
             if (Prefs.isExhausted(context, slot.id)) continue
             try {
                 val result = when (slot.id) {
-                    "gemini" -> callGemini(slot.model, slot.apiKey, b64)
+                    "gemini" -> callGemini(slot.model, slot.apiKey, b64, prompt)
                     "groq" -> callOpenAiStyle(
                         "https://api.groq.com/openai/v1/chat/completions",
-                        slot.model, slot.apiKey, b64, vision = true
+                        slot.model, slot.apiKey, b64, vision = true, prompt = prompt
                     )
                     "openrouter" -> callOpenAiStyle(
                         "https://openrouter.ai/api/v1/chat/completions",
-                        slot.model, slot.apiKey, b64, vision = true
+                        slot.model, slot.apiKey, b64, vision = true, prompt = prompt
                     )
                     else -> null
                 }
@@ -100,14 +119,14 @@ Rules:
         return Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
     }
 
-    private fun callGemini(model: String, key: String, b64: String): AiResult? {
+    private fun callGemini(model: String, key: String, b64: String, prompt: String = PROMPT): AiResult? {
         val url = URL(
             "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$key"
         )
         val body = JSONObject().apply {
             put("contents", JSONArray().put(JSONObject().apply {
                 put("parts", JSONArray()
-                    .put(JSONObject().put("text", PROMPT))
+                    .put(JSONObject().put("text", prompt))
                     .put(JSONObject().apply {
                         put("inline_data", JSONObject()
                             .put("mime_type", "image/jpeg")
@@ -133,11 +152,12 @@ Rules:
         model: String,
         key: String,
         b64: String,
-        vision: Boolean
+        vision: Boolean,
+        prompt: String = PROMPT
     ): AiResult? {
         val url = URL(endpoint)
         val content = JSONArray()
-            .put(JSONObject().put("type", "text").put("text", PROMPT))
+            .put(JSONObject().put("type", "text").put("text", prompt))
             .put(JSONObject().apply {
                 put("type", "image_url")
                 put("image_url", JSONObject().put("url", "data:image/jpeg;base64,$b64"))

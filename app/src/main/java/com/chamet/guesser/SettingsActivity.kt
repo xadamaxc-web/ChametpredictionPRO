@@ -68,14 +68,27 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnLearn).setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
                 val rows = RoundDatabase.get(this@SettingsActivity).roundDao().getAll()
+                // Snapshot current params to disk before applying candidate
+                ParamsLoader.saveRollback(this@SettingsActivity, EngineParams.active)
                 val result = LocalLearner.tryLearn(rows)
+                if (result.applied) {
+                    ParamsLoader.saveLearned(this@SettingsActivity, EngineParams.active)
+                }
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@SettingsActivity, result.message, Toast.LENGTH_LONG).show()
                 }
             }
         }
         findViewById<Button>(R.id.btnRollback).setOnClickListener {
-            val ok = LocalLearner.rollback()
+            val rolled = ParamsLoader.loadRollback(this)
+            val ok = if (rolled != null) {
+                EngineParams.use(rolled)
+                ParamsLoader.clearLearned(this)
+                LocalLearner.clearPrevious()
+                true
+            } else {
+                LocalLearner.rollback()
+            }
             Toast.makeText(
                 this,
                 if (ok) "Rolled back to ${EngineParams.active.version}" else "Nothing to roll back",
@@ -83,10 +96,52 @@ class SettingsActivity : AppCompatActivity() {
             ).show()
         }
 
+        val cbAutoCap = findViewById<CheckBox>(R.id.cbAutoCapture)
+        cbAutoCap?.isChecked = Prefs.autoCapture(this)
+        cbAutoCap?.setOnCheckedChangeListener { _, v -> Prefs.setAutoCapture(this, v) }
+
+        val cbServer = findViewById<CheckBox>(R.id.cbServerEnabled)
+        val etUrl = findViewById<EditText>(R.id.etServerUrl)
+        cbServer?.isChecked = Prefs.serverEnabled(this)
+        etUrl?.setText(Prefs.serverBaseUrl(this))
+        findViewById<Button>(R.id.btnServerLogin)?.setOnClickListener {
+            val email = findViewById<EditText>(R.id.etServerEmail)?.text?.toString().orEmpty()
+            val pass = findViewById<EditText>(R.id.etServerPassword)?.text?.toString().orEmpty()
+            Prefs.setServerEnabled(this, true)
+            Prefs.setServerBaseUrl(this, etUrl?.text?.toString().orEmpty())
+            CoroutineScope(Dispatchers.Main).launch {
+                val ok = ServerClient.login(this@SettingsActivity, email, pass)
+                Toast.makeText(this@SettingsActivity, if (ok) "Logged in" else "Login failed", Toast.LENGTH_SHORT).show()
+            }
+        }
+        findViewById<Button>(R.id.btnRequestLease)?.setOnClickListener {
+            CoroutineScope(Dispatchers.Main).launch {
+                val l = ServerClient.requestLease(this@SettingsActivity)
+                Toast.makeText(
+                    this@SettingsActivity,
+                    if (l?.active == true) "Lease until ${l.expiresAt}" else "Lease failed",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+        findViewById<Button>(R.id.btnRedeem)?.setOnClickListener {
+            val code = findViewById<EditText>(R.id.etRedeemCode)?.text?.toString().orEmpty()
+            CoroutineScope(Dispatchers.Main).launch {
+                val ok = ServerClient.redeem(this@SettingsActivity, code)
+                Toast.makeText(this@SettingsActivity, if (ok) "Redeemed" else "Redeem failed", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
         findViewById<Button>(R.id.btnSave).setOnClickListener {
             Prefs.setAutoHideChametOnly(this, cbAuto.isChecked)
             Prefs.setPositionBiasEnabled(this, cbBias.isChecked)
+            findViewById<CheckBox>(R.id.cbAutoCapture)?.let {
+                Prefs.setAutoCapture(this, it.isChecked)
+            }
             Prefs.setObserveOnly(this, cbObserve.isChecked)
+            cbServer?.let { Prefs.setServerEnabled(this, it.isChecked) }
+            etUrl?.let { Prefs.setServerBaseUrl(this, it.text.toString().trim()) }
             Prefs.setCapturePaused(this, cbPaused.isChecked)
             Prefs.setMinConfidence(this, etMinConf.text.toString().toIntOrNull() ?: 35)
             Prefs.setStakeCapPercent(this, etStakeCap.text.toString().toIntOrNull() ?: 7)

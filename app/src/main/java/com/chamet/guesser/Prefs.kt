@@ -146,6 +146,7 @@ object Prefs {
         if (total == 0) return null
         return roadManualCount(ctx) * 100.0 / total
     }
+}
 
     // ---- Session 9: controller ----
     /** auto = capture freely; manual = user taps floating button only */
@@ -172,4 +173,31 @@ object Prefs {
     fun stakeCapPercent(ctx: Context): Int = p(ctx).getInt("stakeCapPercent", 7)
     fun setStakeCapPercent(ctx: Context, v: Int) =
         p(ctx).edit().putInt("stakeCapPercent", v.coerceIn(1, 20)).apply()
-}
+
+    /** When true, OverlayService polls countdown and advances without taps. */
+    fun autoCapture(ctx: Context): Boolean = p(ctx).getBoolean("autoCapture", false)
+    fun setAutoCapture(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean("autoCapture", v).apply()
+
+    // ---- Phase 2: server control plane ----
+    fun serverEnabled(ctx: Context): Boolean = p(ctx).getBoolean("serverEnabled", false)
+    fun setServerEnabled(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean("serverEnabled", v).apply()
+
+    fun serverBaseUrl(ctx: Context): String =
+        p(ctx).getString("serverBaseUrl", "http://10.0.2.2:8787") ?: "http://10.0.2.2:8787"
+    fun setServerBaseUrl(ctx: Context, v: String) =
+        p(ctx).edit().putString("serverBaseUrl", v).apply()
+
+    fun serverToken(ctx: Context): String = p(ctx).getString("serverToken", "") ?: ""
+    fun setServerToken(ctx: Context, v: String) =
+        p(ctx).edit().putString("serverToken", v).apply()
+
+    fun serverPlan(ctx: Context): String = p(ctx).getString("serverPlan", "free") ?: "free"
+    fun setServerPlan(ctx: Context, v: String) =
+        p(ctx).edit().putString("serverPlan", v).apply()
+
+    fun leaseExpiresAt(ctx: Context): String? = p(ctx).getString("leaseExpiresAt", null)
+    fun setLeaseExpiresAt(ctx: Context, v: String?) =
+        p(ctx).edit().putString("leaseExpiresAt", v).apply()
+

@@ -73,8 +73,8 @@ class Session2RoadTests {
         assertEquals(1, OCRHelper.estimateSlot(w, 300f))
         assertEquals(2, OCRHelper.estimateSlot(w, 540f))
         assertEquals(3, OCRHelper.estimateSlot(w, 900f))
-        assertEquals(2, OCRHelper.estimateSlot(w, null))   // default mid
-        assertEquals(2, OCRHelper.estimateSlot(0, 100f))
+        assertEquals(null, OCRHelper.estimateSlot(w, null))   // unknown — do not invent mid
+        assertEquals(null, OCRHelper.estimateSlot(0, 100f))
     }
 
     // ---- pool sum (post-close check only; pure helper) ----

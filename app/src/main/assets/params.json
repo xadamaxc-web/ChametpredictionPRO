@@ -1,4 +1,5 @@
 {
+  "schema_version": 1,
   "version": "8.1.0",
   "simulations": 2000,
   "defaultSeed": 42,
@@ -30,15 +31,10 @@
     {"type": "Desert", "px": 722},
     {"type": "Desert", "px": 98},
     {"type": "Bumpy", "px": 415},
-    {"type": "Desert", "px": 475},
-    {"type": "Desert", "px": 500},
-    {"type": "Dirt", "px": 300},
-    {"type": "Potholes", "px": 250},
-    {"type": "Bumpy", "px": 200},
-    {"type": "Expressway", "px": 150},
-    {"type": "Highway", "px": 400}
+    {"type": "Desert", "px": 475}
   ],
   "trackWidthPx": 990,
   "segmentCountMin": 2,
-  "segmentCountMax": 3
+  "segmentCountMax": 3,
+  "position_bias": {"p1": 1.0, "p2": 1.0, "p3": 1.0}
 }

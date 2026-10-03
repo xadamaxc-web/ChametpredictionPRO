@@ -30,7 +30,20 @@ class OverlayService : Service() {
     private lateinit var floatingButton: View
     private lateinit var resultOverlay: ResultOverlay
     private val scope = CoroutineScope(Dispatchers.Main)
+    private val roundMachine = RoundStateMachine()
+    private val raceLoopController = RaceLoopController()
     private val handler = Handler(Looper.getMainLooper())
+    private var raceLoopPosted = false
+    private val raceLoop = object : Runnable {
+        override fun run() {
+            driveStateMachine()
+            // Session 5: memory sample ~every 30s
+            if (System.currentTimeMillis() % 30_000L < 250L) {
+                ResourceProbe.snapshot(this@OverlayService, "tick")
+            }
+            if (raceLoopPosted) handler.postDelayed(this, 200L)
+        }
+    }
     private val foregroundChecker = object : Runnable {
         override fun run() {
             updateOverlayVisibility()
@@ -47,11 +60,16 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         isRunning = true
+        ParamsLoader.loadIntoEngineLogged(this)
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         resultOverlay = ResultOverlay(this, windowManager)
         startForegroundNotification()
         addFloatingButton()
         handler.post(foregroundChecker)
+        raceLoopPosted = true
+        handler.post(raceLoop)
+        ResourceProbe.start()
+        ResourceProbe.snapshot(this, "service_start")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
@@ -65,6 +83,8 @@ class OverlayService : Service() {
         } catch (_: Exception) {}
         resultOverlay.removeAll()
         handler.removeCallbacks(foregroundChecker)
+        raceLoopPosted = false
+        handler.removeCallbacks(raceLoop)
     }
 
     private fun startForegroundNotification() {
@@ -78,7 +98,7 @@ class OverlayService : Service() {
         }
         val notif: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Chamet Guesser active")
-            .setContentText("Tap floating button to capture")
+            .setContentText("Tap: open betting · again: close · race auto-tracks")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .setOngoing(true)
             .build()
@@ -124,7 +144,7 @@ class OverlayService : Service() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (!moved) captureAndShow(mode = CaptureMode.FULL)
+                    if (!moved) onUserCaptureTap()
                     true
                 }
                 else -> false
@@ -205,6 +225,174 @@ class OverlayService : Service() {
         }
     }
 
+
+    /** Session 3 — floating-button tap advances / starts the state machine. */
+    private fun onUserCaptureTap() {
+        if (Prefs.capturePaused(this)) {
+            roundMachine.onEvent(RoundStateMachine.Event.PAUSE)
+            Toast.makeText(this, "Capture paused", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val phase = roundMachine.phase()
+        when (phase) {
+            RoundStateMachine.Phase.IDLE,
+            RoundStateMachine.Phase.SAVED,
+            RoundStateMachine.Phase.FINISH -> {
+                if (Prefs.roundUnrecorded(this) && resultOverlay.isShowing()) {
+                    resultOverlay.saveAutoOrUnknown()
+                    roundMachine.onEvent(RoundStateMachine.Event.ROUND_SAVED)
+                }
+                roundMachine.onEvent(RoundStateMachine.Event.OPEN_BETTING)
+                captureAndShow(CaptureMode.FULL)
+            }
+            RoundStateMachine.Phase.BETTING -> {
+                // Second tap while betting = lock / closed
+                roundMachine.onEvent(RoundStateMachine.Event.BETTING_CLOSED)
+                resultOverlay.syncPhaseFromMachine(roundMachine.snapshot())
+                Toast.makeText(this, "Betting closed — waiting for race", Toast.LENGTH_SHORT).show()
+            }
+            RoundStateMachine.Phase.CLOSED -> {
+                roundMachine.onEvent(RoundStateMachine.Event.RACE_STARTED)
+                raceLoopController.onRaceStarted()
+                captureForAction(RoundStateMachine.CaptureAction.STRIP_ONCE)
+            }
+            RoundStateMachine.Phase.RACE -> {
+                // Manual track sample
+                captureForAction(RoundStateMachine.CaptureAction.TRACK_SAMPLE)
+            }
+        }
+    }
+
+    /**
+     * Session 3 — periodic tick: auto phase transitions + scheduled captures
+     * (strip once, track ~4 fps, finish check).
+     */
+    private var lastCountdownPollMs = 0L
+
+    private fun driveStateMachine() {
+        if (Prefs.capturePaused(this)) {
+            if (!roundMachine.isPaused()) roundMachine.onEvent(RoundStateMachine.Event.PAUSE)
+            return
+        } else if (roundMachine.isPaused()) {
+            roundMachine.onEvent(RoundStateMachine.Event.RESUME)
+        }
+
+        // Session 2: auto-capture polls countdown ~1/s and advances phases without taps
+        if (Prefs.autoCapture(this) && CaptureHolder.data != null) {
+            val now = System.currentTimeMillis()
+            if (now - lastCountdownPollMs >= 1000L) {
+                lastCountdownPollMs = now
+                pollCountdownAndAdvance()
+            }
+        }
+
+        val snap = roundMachine.tick()
+        resultOverlay.syncPhaseFromMachine(snap)
+        when (snap.action) {
+            RoundStateMachine.CaptureAction.FULL_PRE_RACE -> {
+                if (Prefs.autoCapture(this) && !resultOverlay.isShowing()) {
+                    captureAndShow(CaptureMode.FULL)
+                }
+            }
+            RoundStateMachine.CaptureAction.STRIP_ONCE ->
+                captureForAction(RoundStateMachine.CaptureAction.STRIP_ONCE)
+            RoundStateMachine.CaptureAction.TRACK_SAMPLE -> {
+                val extra = raceLoopController.nextWork(
+                    roundMachine.phase() == RoundStateMachine.Phase.RACE
+                )
+                if (extra == RaceLoopController.Work.STRIP_RECHECK) {
+                    captureForAction(RoundStateMachine.CaptureAction.STRIP_ONCE)
+                }
+                captureForAction(RoundStateMachine.CaptureAction.TRACK_SAMPLE)
+            }
+            RoundStateMachine.CaptureAction.FINISH_CHECK -> {
+                captureForAction(RoundStateMachine.CaptureAction.FINISH_CHECK)
+                if (snap.shouldSave) {
+                    if (resultOverlay.isShowing()) {
+                        resultOverlay.saveAutoOrUnknown()
+                    }
+                    roundMachine.markSaved()
+                }
+            }
+            else -> { }
+        }
+    }
+
+    /**
+     * Capture a fractional crop where the card countdown lives, OCR it lightly,
+     * and feed seconds into the state machine.
+     */
+    private fun pollCountdownAndAdvance() {
+        scope.launch {
+            try {
+                val bitmap = ScreenCapture.capture(this@OverlayService) ?: return@launch
+                val box = CountdownReader.cropBox(bitmap.width, bitmap.height)
+                val crop = android.graphics.Bitmap.createBitmap(
+                    bitmap, box.left, box.top, box.width, box.height
+                )
+                // Reuse ML Kit path via OCRHelper raw: readFull is heavy — use countdown text only
+                val text = OCRHelper.readTextOnly(crop)
+                val sec = CountdownReader.parseSeconds(text)
+                if (sec != null) {
+                    roundMachine.applyCountdown(sec)
+                    // Manual road picker only near end with no road reading
+                    if (sec <= 6 && resultOverlay.currentRevealedRoad() == null) {
+                        resultOverlay.promptManualRoadIfNeeded()
+                    }
+                }
+                // If idle and auto, open betting when we see a high countdown
+                if (sec != null && sec >= 20 &&
+                    (roundMachine.phase() == RoundStateMachine.Phase.IDLE ||
+                        roundMachine.phase() == RoundStateMachine.Phase.SAVED)
+                ) {
+                    roundMachine.onEvent(RoundStateMachine.Event.OPEN_BETTING)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("OverlayService", "countdown poll: ${e.message}")
+            }
+        }
+    }
+
+    private fun captureForAction(action: RoundStateMachine.CaptureAction) {
+        if (CaptureHolder.data == null) return
+        if (action == RoundStateMachine.CaptureAction.NONE) return
+        scope.launch {
+            try {
+                val bitmap = ScreenCapture.capture(this@OverlayService) ?: return@launch
+                when (action) {
+                    RoundStateMachine.CaptureAction.STRIP_ONCE -> {
+                        val road = resultOverlay.currentRevealedRoad()
+                        tryApplyStrip(bitmap, road)
+                        roundMachine.markStripCaptured()
+                        // Lightweight lane assignment from last known cards
+                        resultOverlay.applyLaneCarsFromPositions()
+                    }
+                    RoundStateMachine.CaptureAction.TRACK_SAMPLE -> {
+                        resultOverlay.addTrackSampleFromBitmap(bitmap)
+                        roundMachine.markTrackSampled()
+                    }
+                    RoundStateMachine.CaptureAction.FINISH_CHECK -> {
+                        resultOverlay.finaliseTrack()
+                        // Session 4: OCR finish screen for winner hint (track still preferred)
+                        try {
+                            val ocr = OCRHelper.readFull(this@OverlayService, bitmap)
+                            val cars = resultOverlay.currentLaneOrPositionCars()
+                            val fromText = FinishScreenMatcher.matchFromText(ocr.rawText, cars)
+                            if (fromText != null) {
+                                resultOverlay.applyFinishScreenWinner(fromText)
+                            }
+                        } catch (_: Exception) { }
+                        roundMachine.onEvent(RoundStateMachine.Event.WINNER_KNOWN)
+                        raceLoopController.onRaceEnded()
+                    }
+                    else -> { }
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("OverlayService", "action $action failed: ${e.message}")
+            }
+        }
+    }
+
     /**
      * Session 4 — read road types + lengths from the race strip once.
      * Low-confidence crops are saved under Documents for later training.
@@ -214,8 +402,27 @@ class OverlayService : Service() {
             val strip = RaceStripReader.analyse(bitmap, visibleRoad = visibleRoad)
             if (strip == null || strip.segments.isEmpty()) return
             resultOverlay.applyStripLayout(strip)
+            // Session 3: strip visible ⇒ race has started
+            if (roundMachine.phase() == RoundStateMachine.Phase.BETTING ||
+                roundMachine.phase() == RoundStateMachine.Phase.CLOSED) {
+                roundMachine.onEvent(RoundStateMachine.Event.RACE_STARTED)
+                raceLoopController.onRaceStarted()
+            }
+            roundMachine.markStripCaptured()
             if (strip.confidence < 0.55) {
                 saveLowConfidenceCrop(bitmap, strip)
+                // Session 3: send strip crop only to AI for a second opinion (best-effort)
+                scope.launch {
+                    try {
+                        val y0 = (bitmap.height * 0.75f).toInt()
+                        val y1 = (bitmap.height * 0.93f).toInt().coerceAtLeast(y0 + 1)
+                        val x0 = strip.startX.coerceIn(0, bitmap.width - 1)
+                        val x1 = strip.endX.coerceIn(x0 + 1, bitmap.width)
+                        val crop = android.graphics.Bitmap.createBitmap(bitmap, x0, y0, x1 - x0, y1 - y0)
+                        AiOcrClient.analyze(this@OverlayService, crop, roadOnly = true)
+                        // Result is logged by provider; layout stays local until confidence improves
+                    } catch (_: Exception) { }
+                }
             }
         } catch (e: Exception) {
             android.util.Log.w("OverlayService", "strip read failed: ${e.message}")
@@ -232,6 +439,7 @@ class OverlayService : Service() {
             val x0 = strip.startX.coerceIn(0, bitmap.width - 1)
             val x1 = strip.endX.coerceIn(x0 + 1, bitmap.width)
             val crop = android.graphics.Bitmap.createBitmap(bitmap, x0, y0, x1 - x0, y1 - y0)
+            pruneLowConfCrops(dir, keep = 20)
             val file = java.io.File(dir, "strip_lowconf_${System.currentTimeMillis()}.png")
             java.io.FileOutputStream(file).use { out ->
                 crop.compress(android.graphics.Bitmap.CompressFormat.PNG, 90, out)
@@ -263,4 +471,13 @@ class OverlayService : Service() {
             null // permission missing → treat as always show (caller checks null)
         }
     }
+
+    private fun pruneLowConfCrops(dir: java.io.File, keep: Int) {
+        try {
+            val files = dir.listFiles { f -> f.name.startsWith("strip_lowconf_") && f.name.endsWith(".png") }
+                ?.sortedByDescending { it.lastModified() } ?: return
+            files.drop(keep).forEach { it.delete() }
+        } catch (_: Exception) { }
+    }
+
 }

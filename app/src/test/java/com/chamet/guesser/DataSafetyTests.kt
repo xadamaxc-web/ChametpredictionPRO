@@ -91,7 +91,11 @@ class DataSafetyTests {
             synced = true
         )
         val row = CsvColumns.row(r)
-        val idx = CsvColumns.HEADERS.indexOf
+        fun idx(col: String): Int {
+            val i = CsvColumns.HEADERS.indexOf(col)
+            assertTrue("missing CSV column $col", i >= 0)
+            return i
+        }
         assertEquals("abc-123", row[idx("roundUuid")])
         assertEquals(2, row[idx("revealedSlot")])
         assertEquals("Desert", row[idx("visibleRoad")])

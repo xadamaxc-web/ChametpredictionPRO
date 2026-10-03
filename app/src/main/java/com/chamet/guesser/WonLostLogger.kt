@@ -178,6 +178,7 @@ object WonLostLogger {
         winnerSource: String? = null,
         modelWinner: String? = null,
         modelTimes: String? = null,
+        pickJson: String? = null,
         paramsVersion: String? = null
     ) {
         val now = System.currentTimeMillis()
@@ -257,6 +258,7 @@ object WonLostLogger {
             winnerSource = winnerSource,
             modelWinner = modelWinner,
             modelTimes = modelTimes,
+            pickJson = pickJson,
             paramsVersion = paramsVersion ?: SpeedDatabase.paramsVersion,
             synced = false
         )
@@ -268,6 +270,49 @@ object WonLostLogger {
             currentRoundId = dao.insert(entity)
             if (trackSamples.isNotEmpty() && entity.roundUuid.isNotBlank()) {
                 trackDao.insertAll(TopViewTracker.toEntities(entity.roundUuid, trackSamples))
+            }
+            // Phase 2: optional server sync (never blocks offline use)
+            if (Prefs.serverEnabled(context) && Prefs.serverToken(context).isNotBlank()) {
+                try {
+                    val jo = org.json.JSONObject()
+                        .put("roundUuid", entity.roundUuid)
+                        .put("winner", entity.winner)
+                        .put("won", entity.won)
+                        .put("r1", entity.r1)
+                        .put("r2", entity.r2)
+                        .put("r3", entity.r3)
+                        .put("v1", entity.v1)
+                        .put("v2", entity.v2)
+                        .put("v3", entity.v3)
+                        .put("modelWinner", entity.modelWinner)
+                        .put("modelTimes", entity.modelTimes)
+                        .put("pickJson", entity.pickJson)
+                        .put("paramsVersion", entity.paramsVersion)
+                        .put("winnerSource", entity.winnerSource)
+                        .put("roadSource", entity.roadSource)
+                        .put("visibleRoad", entity.visibleRoad)
+                        .put("roadType1", entity.roadType1)
+                        .put("roadType2", entity.roadType2)
+                        .put("roadType3", entity.roadType3)
+                        .put("roadPx1", entity.roadPx1)
+                        .put("roadPx2", entity.roadPx2)
+                        .put("roadPx3", entity.roadPx3)
+                        .put("laneCars", entity.laneCars)
+                        .put("finishOrder", entity.finishOrder)
+                        .put("timestamp", entity.timestamp)
+                    val arr = org.json.JSONArray().put(jo)
+                    val trackArr = org.json.JSONArray()
+                    for (s in trackSamples) {
+                        trackArr.put(org.json.JSONObject()
+                            .put("roundUuid", entity.roundUuid)
+                            .put("timeMs", s.timeMs)
+                            .put("x1", s.x1).put("x2", s.x2).put("x3", s.x3))
+                    }
+                    val ok = ServerClient.syncRounds(context, arr, trackArr)
+                    if (ok && currentRoundId != null) {
+                        try { dao.markSynced(currentRoundId!!) } catch (_: Exception) { }
+                    }
+                } catch (_: Exception) { }
             }
         }
     }

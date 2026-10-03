@@ -20,7 +20,9 @@ data class EngineParams(
     val lengthPriorPx: List<Pair<String, Double>> = DEFAULT_LENGTH_PRIOR,
     val trackWidthPx: Double = 990.0,
     val segmentCountMin: Int = 2,
-    val segmentCountMax: Int = 3
+    val segmentCountMax: Int = 3,
+    /** Default left/mid/right multipliers (overridden by Prefs when learned). */
+    val positionBias: Triple<Double, Double, Double> = Triple(1.0, 1.0, 1.0)
 ) {
     fun speedOf(car: String, road: String): Int = speeds[car]?.get(road) ?: 0
 
@@ -81,12 +83,11 @@ data class EngineParams(
         )
 
         /** Measured layouts from the plan + a few neutral priors. */
+        /** Measured layouts from the plan goldens only (no invented fillers). */
         val DEFAULT_LENGTH_PRIOR: List<Pair<String, Double>> = listOf(
-            "Desert" to 870.0, "Highway" to 118.0,
-            "Highway" to 167.0, "Expressway" to 98.0, "Desert" to 722.0,
-            "Desert" to 98.0, "Bumpy" to 415.0, "Desert" to 475.0,
-            "Desert" to 500.0, "Dirt" to 300.0, "Potholes" to 250.0,
-            "Bumpy" to 200.0, "Expressway" to 150.0, "Highway" to 400.0
+            "Desert" to 870.0, "Highway" to 118.0,                 // 4:11
+            "Highway" to 167.0, "Expressway" to 98.0, "Desert" to 722.0, // 4:14
+            "Desert" to 98.0, "Bumpy" to 415.0, "Desert" to 475.0  // 4:16
         )
 
         val DEFAULT = EngineParams()

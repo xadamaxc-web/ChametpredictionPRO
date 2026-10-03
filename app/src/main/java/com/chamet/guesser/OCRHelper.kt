@@ -44,6 +44,21 @@ object OCRHelper {
         return readFull(context, screenshot).cars
     }
 
+    /**
+     * Lightweight ML Kit text only — never calls AI. Used for countdown polling.
+     */
+    suspend fun readTextOnly(screenshot: Bitmap): String = withContext(Dispatchers.Default) {
+        try {
+            val image = InputImage.fromBitmap(screenshot, 0)
+            val visionText: Text? = suspendCoroutine { cont ->
+                recognizer.process(image)
+                    .addOnSuccessListener { cont.resume(it) }
+                    .addOnFailureListener { cont.resume(null) }
+            }
+            visionText?.text ?: ""
+        } catch (_: Exception) { "" }
+    }
+
     suspend fun readFull(context: Context, screenshot: Bitmap): OcrResult {
         val mode = Prefs.ocrMode(context)
         return when (mode) {
@@ -59,7 +74,9 @@ object OCRHelper {
                     // Cars/pools ok — still try AI for road if banner was missed
                     if (ml.revealedRoadName != null) ml
                     else {
-                        val ai = AiOcrClient.analyze(context, screenshot)
+                        // Session 2 fix: send banner crop only, not the full screenshot
+                        val crop = bannerCrop(screenshot)
+                        val ai = AiOcrClient.analyze(context, crop, roadOnly = true)
                         if (ai != null && !ai.revealedRoadName.isNullOrBlank()) {
                             ml.copy(
                                 revealedRoadPosition = ai.revealedRoadPosition
@@ -155,12 +172,15 @@ object OCRHelper {
 
             // Fallback: scan all lines if nothing in the upper band matched
             if (roadName == null) {
-                for (block in visionText.textBlocks) for (line in block.lines) {
-                    val box = line.boundingBox ?: continue
-                    RoadMatcher.match(line.text)?.let {
-                        roadName = it
-                        roadCx = box.exactCenterX()
-                        return@let
+                roadScan@ for (block in visionText.textBlocks) {
+                    for (line in block.lines) {
+                        val box = line.boundingBox ?: continue
+                        val match = RoadMatcher.match(line.text)
+                        if (match != null) {
+                            roadName = match
+                            roadCx = box.exactCenterX()
+                            break@roadScan
+                        }
                     }
                 }
             }
@@ -182,14 +202,27 @@ object OCRHelper {
         }
     }
 
-    /** Map horizontal center of the banner to R1 / R2 / R3. */
-    fun estimateSlot(screenWidth: Int, centerX: Float?): Int {
-        if (centerX == null || screenWidth <= 0) return 2
+    /**
+     * Map horizontal center of the banner to R1 / R2 / R3.
+     * Returns null when center is unknown — never invents a middle-slot default.
+     */
+    fun estimateSlot(screenWidth: Int, centerX: Float?): Int? {
+        if (centerX == null || screenWidth <= 0) return null
         val third = screenWidth / 3f
         return when {
             centerX < third -> 1
             centerX < third * 2 -> 2
             else -> 3
         }
+    }
+
+    /**
+     * Top ~35% of the screen where the yellow road banner lives.
+     * Used so AI OCR is not fed the entire race UI.
+     */
+    fun bannerCrop(screenshot: Bitmap): Bitmap {
+        val h = (screenshot.height * 0.35f).toInt().coerceAtLeast(1)
+        val w = screenshot.width.coerceAtLeast(1)
+        return Bitmap.createBitmap(screenshot, 0, 0, w, h.coerceAtMost(screenshot.height))
     }
 }

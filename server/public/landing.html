@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chamet Guesser — Race predictions that learn</title>
+  <style>
+    :root { --bg:#07071a; --card:#12122a; --accent:#fca311; --text:#eee; --muted:#8a8a9e; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui,sans-serif; background:var(--bg); color:var(--text); }
+    header { padding:48px 20px 24px; text-align:center; }
+    h1 { color:var(--accent); margin:0 0 8px; font-size:2rem; }
+    .sub { color:var(--muted); max-width:520px; margin:0 auto 24px; }
+    .cta { display:inline-block; background:var(--accent); color:#000; font-weight:700;
+      padding:12px 20px; border-radius:8px; text-decoration:none; margin:4px; }
+    .cta.ghost { background:transparent; border:1px solid var(--accent); color:var(--accent); }
+    main { max-width:900px; margin:0 auto; padding:16px; }
+    .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+    .card { background:var(--card); border-radius:12px; padding:16px; }
+    .card h3 { margin:0 0 8px; color:var(--accent); }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th,td { border-bottom:1px solid #2a2a40; padding:6px 4px; text-align:left; }
+    input,button { padding:10px 12px; border-radius:8px; border:1px solid #333; background:#0e0e22; color:#fff; }
+    button { background:var(--accent); color:#000; font-weight:700; cursor:pointer; border:none; }
+    footer { text-align:center; color:var(--muted); padding:32px 16px; font-size:12px; }
+    .hit { color:#4ade80; } .miss { color:#f87171; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Chamet Guesser</h1>
+    <p class="sub">Read the race. Predict finish times. Learn from every round.
+      Private engine on your phone — optional server for closed groups.</p>
+    <a class="cta" href="#waitlist">Request beta access</a>
+    <a class="cta ghost" href="/admin">Admin</a>
+  </header>
+  <main>
+    <div class="grid">
+      <div class="card">
+        <h3>Local engine</h3>
+        <p class="sub">Cars, pools, roads, top-view track, finish-time model — works offline.</p>
+      </div>
+      <div class="card">
+        <h3>Server control</h3>
+        <p class="sub">1-hour leases, Free/Pro quotas, payment codes, admin panel.</p>
+      </div>
+      <div class="card">
+        <h3>Nightly learning</h3>
+        <p class="sub">Server can aggregate synced rounds nightly; review before applying params.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>Live results <span id="acc" class="sub"></span></h3>
+      <div id="live">Loading…</div>
+    </div>
+
+    <div class="card" id="waitlist" style="margin-top:16px">
+      <h3>Closed beta waitlist</h3>
+      <p class="sub" id="launchMsg"></p>
+      <input id="email" type="email" placeholder="you@email.com" style="width:min(100%,280px)" />
+      <button onclick="join()">Join waitlist</button>
+      <div id="waitMsg" class="sub"></div>
+    </div>
+  </main>
+  <footer>Chamet Guesser 8.3.0 · Phase 3 · Not affiliated with Chamet</footer>
+  <script>
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"'`]/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
+    }
+    async function load() {
+      try {
+        const launch = await fetch('/api/public/launch').then(r => r.json());
+        launchMsg.textContent = launch.message || '';
+        const feed = await fetch('/api/public/live').then(r => r.json());
+        if (feed.modelAccuracyPct != null) {
+          acc.textContent = '· model ' + feed.modelAccuracyPct.toFixed(0) + '% on ' + feed.count + ' shown';
+        }
+        live.innerHTML = '<table><tr><th>When</th><th>Road</th><th>Winner</th><th>Model</th></tr>' +
+          (feed.results||[]).map(r => {
+            const cls = r.modelHit === true ? 'hit' : r.modelHit === false ? 'miss' : '';
+            return '<tr><td>' + esc((r.at||'').slice(11,19)) + '</td><td>' + esc(r.road||'—') +
+              '</td><td>' + esc(r.winner||'—') + '</td><td class="' + cls + '">' +
+              esc(r.modelWinner||'—') + '</td></tr>';
+          }).join('') + '</table>';
+      } catch (e) {
+        live.textContent = 'Live feed unavailable';
+      }
+    }
+    async function join() {
+      try {
+        const j = await fetch('/api/public/waitlist', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email: email.value })
+        }).then(r => r.json());
+        waitMsg.textContent = j.status === 'joined' ? 'You are on the list.' :
+          j.error || j.status || 'OK';
+      } catch (e) { waitMsg.textContent = e.message; }
+    }
+    load();
+    setInterval(load, 60000);
+  </script>
+</body>
+</html>

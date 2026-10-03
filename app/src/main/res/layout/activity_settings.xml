@@ -121,6 +121,10 @@
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Controller (Session 9)" android:textColor="#FCA311" android:textStyle="bold"
             android:layout_marginTop="8dp" />
+        <CheckBox android:id="@+id/cbAutoCapture" android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto-capture (countdown-driven, minimal taps)"
+            android:textColor="#FFFFFF" />
         <CheckBox android:id="@+id/cbObserveOnly" android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Observe-only (record + predict, no stake)"
@@ -148,6 +152,40 @@
             android:backgroundTint="#4A4A6E" android:layout_marginBottom="6dp" />
         <Button android:id="@+id/btnRollback" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:text="Rollback params"
+            android:backgroundTint="#4A4A6E" android:layout_marginBottom="12dp" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Server (Phase 2)" android:textColor="#FCA311" android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+        <CheckBox android:id="@+id/cbServerEnabled" android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enable server lock + sync"
+            android:textColor="#FFFFFF" />
+        <EditText android:id="@+id/etServerUrl" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="http://10.0.2.2:8787"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:background="#131B2E" android:padding="10dp" />
+        <EditText android:id="@+id/etServerEmail" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="email"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:background="#131B2E" android:padding="10dp" />
+        <EditText android:id="@+id/etServerPassword" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="password"
+            android:inputType="textPassword"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:background="#131B2E" android:padding="10dp" />
+        <Button android:id="@+id/btnServerLogin" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Login to server"
+            android:backgroundTint="#4A4A6E" />
+        <Button android:id="@+id/btnRequestLease" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Request 1h engine lease"
+            android:backgroundTint="#4A4A6E" />
+        <EditText android:id="@+id/etRedeemCode" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="Payment code"
+            android:textColor="#FFFFFF" android:textColorHint="#8A8A9E"
+            android:background="#131B2E" android:padding="10dp" />
+        <Button android:id="@+id/btnRedeem" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Redeem code"
             android:backgroundTint="#4A4A6E" android:layout_marginBottom="12dp" />
 
         <Button android:id="@+id/btnSave" android:layout_width="match_parent"

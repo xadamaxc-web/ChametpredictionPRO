@@ -1,0 +1,11 @@
+{
+  "name": "chamet-guesser-server",
+  "version": "8.3.1",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {}
+}

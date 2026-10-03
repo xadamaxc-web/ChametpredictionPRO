@@ -53,7 +53,9 @@ object OddsEngine {
         poolByCar: Map<String, Long>,
         confidence: Int,
         balance: Long,
-        winProb: Map<String, Double> = emptyMap()   // from Guesser scores; missing = equal chance
+        winProb: Map<String, Double> = emptyMap(),   // from Guesser scores; missing = equal chance
+        /** Stake cap as percent of balance (Settings); default 7. */
+        stakeCapPercent: Int = 7
     ): SplitAdvice {
         if (cars.isEmpty()) {
             return SplitAdvice(emptyList(), 0, 0, null, 0, null, 0, 0, "No cars", -1)
@@ -75,7 +77,8 @@ object OddsEngine {
             CarOdds(car, pool, odds, ev, 0)
         }
 
-        var cap = (balance * 0.07).toLong()
+        val capPct = stakeCapPercent.coerceIn(1, 20) / 100.0
+        var cap = (balance * capPct).toLong()
         var warning: String? = null
 
         if (confidence < 40) {

@@ -5,6 +5,17 @@ plugins {
 }
 
 android {
+    // Session 5 — release signing (fill in locally; never commit keystore passwords):
+    // signingConfigs {
+    //     create("release") {
+    //         storeFile = file(System.getenv("CHAMET_KEYSTORE") ?: "keystore.jks")
+    //         storePassword = System.getenv("CHAMET_KEYSTORE_PASSWORD")
+    //         keyAlias = System.getenv("CHAMET_KEY_ALIAS")
+    //         keyPassword = System.getenv("CHAMET_KEY_PASSWORD")
+    //     }
+    // }
+    // buildTypes { getByName("release") { signingConfig = signingConfigs.getByName("release") } }
+
     namespace = "com.chamet.guesser"
     compileSdk = 34
 
@@ -12,8 +23,8 @@ android {
         applicationId = "com.chamet.guesser"
         minSdk = 29
         targetSdk = 34
-        versionCode = 90
-        versionName = "8.1.0"
+        versionCode = 111
+        versionName = "8.3.1"
 
         // Optional: add your own keystore signing here later
     }

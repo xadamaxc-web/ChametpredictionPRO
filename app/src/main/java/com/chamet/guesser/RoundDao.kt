@@ -153,6 +153,15 @@ interface RoundDao {
     @Query("DELETE FROM rounds")
     suspend fun clearAll()
 
+    @Query("UPDATE rounds SET roundUuid = :uuid WHERE id = :id AND (roundUuid IS NULL OR roundUuid = '')")
+    suspend fun setRoundUuid(id: Long, uuid: String)
+
+    @Query("SELECT id FROM rounds WHERE roundUuid IS NULL OR roundUuid = ''")
+    suspend fun idsMissingRoundUuid(): List<Long>
+
+    @Query("UPDATE rounds SET synced = 1 WHERE id = :id")
+    suspend fun markSynced(id: Long)
+
     @Query("SELECT * FROM rounds WHERE roundUuid = :uuid LIMIT 1")
     suspend fun getByUuid(uuid: String): RoundEntity?
 }

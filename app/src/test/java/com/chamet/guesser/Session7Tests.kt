@@ -23,9 +23,9 @@ class Session7Tests {
             listOf("SUV", "Monster Truck", "Sports Car"), segs
         )!!
         assertEquals("SUV", r.ranked[0].car)
-        assertNear(16.1, r.ranked.first { it.car == "SUV" }.meanTime, 0.3)
-        assertNear(17.0, r.ranked.first { it.car == "Monster Truck" }.meanTime, 0.3)
-        assertNear(19.8, r.ranked.first { it.car == "Sports Car" }.meanTime, 0.3)
+        assertNear(16.1, r.ranked.first { it.car == "SUV" }.meanTime, 0.05)
+        assertNear(17.0, r.ranked.first { it.car == "Monster Truck" }.meanTime, 0.05)
+        assertNear(19.8, r.ranked.first { it.car == "Sports Car" }.meanTime, 0.05)
         assertTrue(r.layoutKnown)
     }
 
@@ -37,9 +37,9 @@ class Session7Tests {
             listOf("Motorcycle", "Monster Truck", "Supercar"), segs
         )!!
         assertEquals("Motorcycle", r.ranked[0].car)
-        assertNear(14.2, r.ranked.first { it.car == "Motorcycle" }.meanTime, 0.3)
-        assertNear(15.6, r.ranked.first { it.car == "Monster Truck" }.meanTime, 0.3)
-        assertNear(18.9, r.ranked.first { it.car == "Supercar" }.meanTime, 0.3)
+        assertNear(14.2, r.ranked.first { it.car == "Motorcycle" }.meanTime, 0.05)
+        assertNear(15.6, r.ranked.first { it.car == "Monster Truck" }.meanTime, 0.05)
+        assertNear(18.9, r.ranked.first { it.car == "Supercar" }.meanTime, 0.05)
     }
 
     @Test fun golden_4_16() {
@@ -50,9 +50,9 @@ class Session7Tests {
             listOf("Motorcycle", "Car", "Supercar"), segs
         )!!
         assertEquals("Motorcycle", r.ranked[0].car)
-        assertNear(14.2, r.ranked.first { it.car == "Motorcycle" }.meanTime, 0.3)
-        assertNear(17.0, r.ranked.first { it.car == "Car" }.meanTime, 0.3)
-        assertNear(21.2, r.ranked.first { it.car == "Supercar" }.meanTime, 0.3)
+        assertNear(14.2, r.ranked.first { it.car == "Motorcycle" }.meanTime, 0.05)
+        assertNear(17.0, r.ranked.first { it.car == "Car" }.meanTime, 0.05)
+        assertNear(21.2, r.ranked.first { it.car == "Supercar" }.meanTime, 0.05)
     }
 
     // ---- simulation determinism ----
@@ -70,14 +70,14 @@ class Session7Tests {
 
     @Test fun differentSeedsDifferUnderOnePercent() {
         val cars = listOf("Supercar", "ATV", "Car")
-        val a = Guesser.simulateGuess("Desert", cars, seed = 1L, simulations = 2000)!!
-        val b = Guesser.simulateGuess("Desert", cars, seed = 2L, simulations = 2000)!!
+        val a = Guesser.simulateGuess("Desert", cars, seed = 1L, simulations = 4000)!!
+        val b = Guesser.simulateGuess("Desert", cars, seed = 2L, simulations = 4000)!!
         for (car in cars) {
             val pa = a.ranked.first { it.car == car }.winProb
             val pb = b.ranked.first { it.car == car }.winProb
             assertTrue(
-                "P(win) for $car differed by ${abs(pa - pb)} (>0.05)",
-                abs(pa - pb) < 0.05 // ~5% absolute; plan says under ~1% typical with 2000
+                "P(win) for $car differed by ${abs(pa - pb)} (>0.02)",
+                abs(pa - pb) < 0.01 // plan: under ~1% of P(win)
             )
         }
         // At least one car can differ slightly
@@ -88,7 +88,7 @@ class Session7Tests {
             )
         }
         // with 2000 sims diffs should usually be small
-        assertTrue(maxDiff < 0.08)
+        assertTrue(maxDiff < 0.015)
     }
 
     @Test fun winProbSumsToOne() {
@@ -117,7 +117,8 @@ class Session7Tests {
         val ms = measureTimeMillis {
             Guesser.simulateGuess("Desert", cars, seed = 2L, simulations = 2000)
         }
-        // Generous for CI/shared hosts; low-end phone target is ~50ms
+        println("Session7 sim 2000 took ${ms}ms (phone target ~50ms)")
+        // CI limit generous; phone target ~50ms
         assertTrue("sim took ${ms}ms", ms < 500)
     }
 

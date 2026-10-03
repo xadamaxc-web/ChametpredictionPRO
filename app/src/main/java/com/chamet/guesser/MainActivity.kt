@@ -13,6 +13,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.core.content.ContextCompat
 import android.content.Intent as AppIntent
 
@@ -45,6 +48,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ParamsLoader.loadIntoEngineLogged(this)
+        // Session 4: backfill empty roundUuid on old rows (once per launch, background)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val dao = RoundDatabase.get(this@MainActivity).roundDao()
+                for (id in dao.idsMissingRoundUuid()) {
+                    dao.setRoundUuid(id, java.util.UUID.randomUUID().toString())
+                }
+            } catch (_: Exception) { }
+        }
         setContentView(R.layout.activity_main)
 
         // Bump session id once per app launch (used in round logs)

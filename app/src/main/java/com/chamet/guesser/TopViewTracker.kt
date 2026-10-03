@@ -253,9 +253,46 @@ object TopViewTracker {
         "Car" to intArrayOf(220, 100, 140),           // pink
         "Sports Car" to intArrayOf(40, 90, 200),      // blue
         "SUV" to intArrayOf(120, 60, 160),            // purple
-        "Monster Truck" to intArrayOf(50, 140, 50)    // green
-        // ORV, ATV, Stock Car — open item 2 (no sprite samples yet)
+        "Monster Truck" to intArrayOf(50, 140, 50),   // green
+        "ORV" to intArrayOf(160, 110, 50),            // brown / tan
+        "ATV" to intArrayOf(200, 40, 40),             // red
+        "Stock Car" to intArrayOf(240, 200, 40)       // yellow
     )
+
+    /**
+     * Sample three lane progress values from a top-view strip region of a screenshot.
+     * Scans each lane band for the rightmost pixel close to a known sprite colour.
+     * Returns x positions in image coordinates (caller maps to track space).
+     */
+    fun sampleLaneProgress(
+        pixels: IntArray,
+        width: Int,
+        height: Int,
+        laneYs: IntArray = intArrayOf(
+            (height * 0.25f).toInt(),
+            (height * 0.50f).toInt(),
+            (height * 0.75f).toInt()
+        )
+    ): FloatArray {
+        val xs = FloatArray(3) { 0f }
+        for (lane in 0..2) {
+            val y = laneYs[lane].coerceIn(0, height - 1)
+            var bestX = 0
+            for (x in 0 until width) {
+                val c = pixels[y * width + x]
+                val r = (c shr 16) and 0xFF
+                val g = (c shr 8) and 0xFF
+                val b = c and 0xFF
+                // skip near-black / near-white track
+                if (r + g + b < 60 || r + g + b > 720) continue
+                if (nearestSpriteHint(r, g, b, maxDist = 70.0) != null) {
+                    bestX = x
+                }
+            }
+            xs[lane] = bestX.toFloat()
+        }
+        return xs
+    }
 
     fun nearestSpriteHint(r: Int, g: Int, b: Int, maxDist: Double = 55.0): String? {
         var best: String? = null

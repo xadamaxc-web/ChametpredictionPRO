@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chamet Guesser Admin</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0a0a1e; color: #eee; margin: 0; padding: 16px; }
+    input, button { padding: 8px 12px; margin: 4px 0; border-radius: 6px; border: 1px solid #333; background: #131b2e; color: #fff; }
+    button { background: #fca311; color: #000; font-weight: 600; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+    th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; font-size: 13px; }
+    h1 { color: #fca311; }
+    .card { background: #131b2e; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+    .muted { color: #8a8a9e; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Chamet Guesser — Phase 2 Admin</h1>
+  <p class="muted">Local control plane · Free/Pro · lease · payment codes</p>
+
+  <div class="card" id="loginBox">
+    <h3>Login</h3>
+    <input id="email" placeholder="email" value="" />
+    <input id="password" type="password" placeholder="password" value="" />
+    <button onclick="login()">Login</button>
+    <div id="loginMsg" class="muted"></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="card">
+      <div id="stats"></div>
+      <button onclick="refresh()">Refresh</button>
+      <button onclick="createCode()">New Pro code (30d)</button>
+      <div id="codes"></div>
+    </div>
+    <div class="card">
+      <h3>Users</h3>
+      <div id="users"></div>
+    </div>
+  </div>
+
+  <script>
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"'`]/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
+    }
+    let token = localStorage.getItem('cg_token') || '';
+    const api = (path, opts = {}) => fetch('/api' + path, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        ...(opts.headers || {})
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(async r => {
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || r.statusText);
+      return j;
+    });
+
+    async function login() {
+      try {
+        const j = await api('/auth/login', {
+          method: 'POST',
+          body: { email: email.value, password: password.value }
+        });
+        token = j.token;
+        localStorage.setItem('cg_token', token);
+        loginBox.style.display = 'none';
+        app.style.display = 'block';
+        refresh();
+      } catch (e) {
+        loginMsg.textContent = e.message;
+      }
+    }
+
+    async function refresh() {
+      const s = await api('/admin/stats');
+      stats.innerHTML = `<b>Stats</b> users=${s.users} rounds=${s.rounds} track=${s.trackPoints} leases=${s.activeLeases} codes=${s.codes}`;
+      const u = await api('/admin/users');
+      users.innerHTML = '<table><tr><th>Email</th><th>Plan</th><th>Role</th><th></th></tr>' +
+        u.users.map(x => '<tr><td>' + esc(x.email) + '</td><td>' + esc(x.plan) +
+          '</td><td>' + esc(x.role) + '</td><td>' +
+          '<button data-id="' + esc(x.id) + '" data-plan="pro" class="btnPlan">Pro</button> ' +
+          '<button data-id="' + esc(x.id) + '" data-plan="free" class="btnPlan">Free</button>' +
+          '</td></tr>').join('') + '</table>';
+      document.querySelectorAll('.btnPlan').forEach(b => b.onclick = () => setPlan(b.dataset.id, b.dataset.plan));
+      const c = await api('/admin/codes');
+      codes.innerHTML = '<table><tr><th>Code</th><th>Plan</th><th>Uses</th><th>Note</th></tr>' +
+        c.codes.map(x => '<tr><td><code>' + esc(x.code) + '</code></td><td>' + esc(x.plan) +
+          '</td><td>' + esc(x.uses) + '/' + esc(x.maxUses) + '</td><td>' + esc(x.note||'') +
+          '</td></tr>').join('') + '</table>';
+    }
+
+    async function setPlan(id, plan) {
+      await api('/admin/users/' + id + '/plan', { method: 'POST', body: { plan } });
+      refresh();
+    }
+    async function createCode() {
+      await api('/admin/codes', { method: 'POST', body: { plan: 'pro', days: 30, maxUses: 5, note: 'admin' } });
+      refresh();
+    }
+
+    if (token) {
+      loginBox.style.display = 'none';
+      app.style.display = 'block';
+      refresh().catch(() => { token = ''; localStorage.removeItem('cg_token'); location.reload(); });
+    }
+  </script>
+</body>
+</html>

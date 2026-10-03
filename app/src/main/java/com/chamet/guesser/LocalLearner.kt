@@ -1,5 +1,7 @@
 package com.chamet.guesser
 
+import kotlin.math.abs
+
 /**
  * Session 8 — local learning from logged rounds (counts only, no server).
  *
@@ -66,10 +68,15 @@ object LocalLearner {
         if (newKnown == 0) {
             return LearnResult(false, "Holdout has no model+winner pairs", candidate.version)
         }
-        if (newPct + 1e-6 < oldPct) {
+        if (newKnown < 5) {
+            return LearnResult(false, "Holdout too small to accept (n=$newKnown)", null, 0, newKnown, oldPct, newPct)
+        }
+        // Require strict improvement when metrics differ; block no-op equality when candidate has no measured lengths
+        val candHasLengths = (candidate.lengthPriorPx.size) > EngineParams.active.lengthPriorPx.size
+        if (newPct + 1e-9 < oldPct || (!candHasLengths && abs(newPct - oldPct) < 1e-9 && newKnown == oldKnown)) {
             return LearnResult(
                 false,
-                "Candidate worse on holdout (${"%.1f".format(newPct)}% < ${"%.1f".format(oldPct)}%) — not applied",
+                "Candidate worse or no-op on holdout (${"%.1f".format(newPct)}% < ${"%.1f".format(oldPct)}%) — not applied",
                 candidate.version,
                 newHits, newKnown, oldPct, newPct
             )
@@ -90,6 +97,14 @@ object LocalLearner {
         EngineParams.use(prev)
         previous = null
         return true
+    }
+
+    fun clearPrevious() {
+        previous = null
+    }
+
+    fun setPrevious(params: EngineParams) {
+        previous = params
     }
 
     fun hasLayout(r: RoundEntity): Boolean {
@@ -125,7 +140,12 @@ object LocalLearner {
                 bag[t] = (bag[t] ?: 0) + 1
             }
         }
-        if (lengthPrior.size < 10) return null
+        val measured = DataIntegrity.measuredLengthPrior(train, minSegments = 8)
+        if (measured != null) {
+            lengthPrior.clear()
+            lengthPrior.addAll(measured)
+        }
+        if (lengthPrior.size < 8) return null
 
         val families = EngineParams.DEFAULT_FAMILIES.toMutableMap()
         for ((visible, counts) in familyCounts) {

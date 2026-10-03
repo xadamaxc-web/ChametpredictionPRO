@@ -118,10 +118,27 @@ abstract class RoundDatabase : RoomDatabase() {
                     }
                 }
                 Log.i(TAG, "Pre-migration backup written to ${dest.absolutePath}")
+                pruneOldBackups(dir, keep = 5)
                 dest
             } catch (e: Exception) {
                 Log.w(TAG, "Pre-migration backup failed: ${e.message}")
                 null
+            }
+        }
+
+        /** Keep only the newest [keep] timestamped DB backups. */
+        private fun pruneOldBackups(dir: File, keep: Int) {
+            try {
+                val files = dir.listFiles { f -> f.name.startsWith("chamet_rounds_backup_") && f.name.endsWith(".db") }
+                    ?.sortedByDescending { it.lastModified() }
+                    ?: return
+                files.drop(keep).forEach { old ->
+                    old.delete()
+                    File(old.path + "-wal").delete()
+                    File(old.path + "-shm").delete()
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "backup prune failed: ${e.message}")
             }
         }
 

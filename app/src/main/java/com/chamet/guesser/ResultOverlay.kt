@@ -233,6 +233,11 @@ class ResultOverlay(
     }
 
     private fun recomputeOdds() {
+        if (!ServerClient.engineUnlocked(context)) {
+            // Phase 2 lock: no stake advice without lease when server mode on
+            return
+        }
+
         val cars = vehicles.filter { it != "—" }
         if (cars.isEmpty()) {
             split = null
@@ -276,7 +281,10 @@ class ResultOverlay(
             confidenceLabel = "ROAD UNKNOWN"
         }
         val orderedCars = vehicles.filter { it != "—" }
-        val rawAdvice = OddsEngine.compute(orderedCars, poolByCar, confidence, roundStartBalance, winProb)
+        val rawAdvice = OddsEngine.compute(
+            orderedCars, poolByCar, confidence, roundStartBalance, winProb,
+            stakeCapPercent = Prefs.stakeCapPercent(context)
+        )
         split = OverlayController.filterAdvice(
             rawAdvice,
             confidence,
@@ -734,7 +742,7 @@ class ResultOverlay(
         orderingMode = false
         orderTaps.clear()
         refreshAll()
-        onRecapture?.invoke()
+        // Session 2: do not blind re-capture — next round starts from the state machine
     }
 
     private fun buildPositionBiasMap(): Map<String, Double> {
@@ -1046,4 +1054,100 @@ class ResultOverlay(
             PixelFormat.TRANSLUCENT
         )
     }
+
+    // ---- Session 3: state machine hooks ----
+
+    fun syncPhaseFromMachine(snap: RoundStateMachine.Snapshot) {
+        captureStage = when (snap.phase) {
+            RoundStateMachine.Phase.BETTING -> "betting"
+            RoundStateMachine.Phase.CLOSED -> "closed"
+            RoundStateMachine.Phase.RACE -> "race"
+            RoundStateMachine.Phase.FINISH -> "finish"
+            RoundStateMachine.Phase.SAVED -> "saved"
+            RoundStateMachine.Phase.IDLE -> "idle"
+        }
+        if (snap.phase == RoundStateMachine.Phase.CLOSED || snap.phase == RoundStateMachine.Phase.RACE) {
+            raceLocked = true
+        }
+        val overlayPhase = RoundStateMachine.toOverlayPhase(snap.phase)
+        tvState?.text = OverlayController.phaseLabel(overlayPhase)
+        try {
+            tvState?.setTextColor(android.graphics.Color.parseColor(OverlayController.phaseColor(overlayPhase)))
+        } catch (_: Exception) { }
+    }
+
+    fun currentRevealedRoad(): String? {
+        val r = revealedRoad()
+        return r.takeIf { it != "???" && RoadMatcher.isKnown(it) }
+    }
+
+    fun applyLaneCarsFromPositions() {
+        val cards = positionCars.ifEmpty { vehicles.filter { it != "—" } }
+        if (cards.isEmpty()) return
+        applyLaneCars(cards)
+    }
+
+    /**
+     * Session 5 wiring: one top-view sample from a capture during RACE.
+     * Uses a coarse horizontal split of the lower strip region as progress proxies
+     * until a real colour-matched tracker is available.
+     */
+    fun addTrackSampleFromBitmap(bitmap: android.graphics.Bitmap) {
+        // Crop lower strip band (top-view race area ~75–93% of screen height)
+        val y0 = (bitmap.height * 0.75f).toInt().coerceIn(0, bitmap.height - 2)
+        val y1 = (bitmap.height * 0.93f).toInt().coerceAtLeast(y0 + 1).coerceAtMost(bitmap.height)
+        val h = y1 - y0
+        val w = bitmap.width
+        val crop = android.graphics.Bitmap.createBitmap(bitmap, 0, y0, w, h)
+        val pixels = IntArray(w * h)
+        crop.getPixels(pixels, 0, w, 0, 0, w, h)
+        val xs = TopViewTracker.sampleLaneProgress(pixels, w, h)
+        // Fallback: if no coloured sprite found, keep previous sample x (no synthetic time drift)
+        val prev = trackSamples.lastOrNull()
+        fun xOrPrev(i: Int, sample: Float) =
+            if (sample > 1f) sample else (when (i) {
+                0 -> prev?.x1
+                1 -> prev?.x2
+                else -> prev?.x3
+            } ?: 0f)
+        addTrackSample(
+            timeMs = System.currentTimeMillis(),
+            x1 = xOrPrev(0, xs[0]),
+            x2 = xOrPrev(1, xs[1]),
+            x3 = xOrPrev(2, xs[2])
+        )
+    }
+
+
+    /** Show manual road picker only when race is nearly over and road is still unknown. */
+    fun promptManualRoadIfNeeded() {
+        val road = revealedRoad()
+        if (road != "???" && RoadMatcher.isKnown(road)) return
+        // Open R1 dropdown as the manual entry point (thumb-first)
+        try {
+            openRoadDropdown(1)
+        } catch (_: Exception) { }
+    }
+
+
+    fun currentLaneOrPositionCars(): List<String> {
+        val fromLane = laneCars.filter { it != "—" && it.isNotBlank() }
+        if (fromLane.isNotEmpty()) return fromLane
+        return positionCars.filter { it != "—" && it.isNotBlank() }
+            .ifEmpty { vehicles.filter { it != "—" && it.isNotBlank() } }
+    }
+
+    /**
+     * Session 4: finish-screen OCR hint. Does not override an existing track winner
+     * unless winnerSource is still empty/unknown.
+     */
+    fun applyFinishScreenWinner(name: String) {
+        if (name.isBlank()) return
+        if (winnerCar != null && winnerSource == AutoResult.SOURCE_TRACK) return
+        if (resultRecorded) return
+        winnerCar = name
+        winnerSource = AutoResult.SOURCE_SCREEN
+        captureStage = "finish"
+    }
+
 }
