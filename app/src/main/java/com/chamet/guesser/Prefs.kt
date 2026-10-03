@@ -146,7 +146,6 @@ object Prefs {
         if (total == 0) return null
         return roadManualCount(ctx) * 100.0 / total
     }
-}
 
     // ---- Session 9: controller ----
     /** auto = capture freely; manual = user taps floating button only */
@@ -200,4 +199,4 @@ object Prefs {
     fun leaseExpiresAt(ctx: Context): String? = p(ctx).getString("leaseExpiresAt", null)
     fun setLeaseExpiresAt(ctx: Context, v: String?) =
         p(ctx).edit().putString("leaseExpiresAt", v).apply()
-
+}

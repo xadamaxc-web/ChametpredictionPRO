@@ -231,9 +231,9 @@ object ParamsLoader {
     }
 
     private fun parsePositionBias(json: String): Triple<Double, Double, Double> {
-        val p1 = Regex("\"p1\"\s*:\s*(-?\d+(?:\.\d+)?)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
-        val p2 = Regex("\"p2\"\s*:\s*(-?\d+(?:\.\d+)?)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
-        val p3 = Regex("\"p3\"\s*:\s*(-?\d+(?:\.\d+)?)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+        val p1 = Regex("\"p1\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+        val p2 = Regex("\"p2\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+        val p3 = Regex("\"p3\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
         return Triple(p1, p2, p3)
     }
 

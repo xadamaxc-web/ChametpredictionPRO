@@ -156,6 +156,7 @@ class RoundStateMachine(
                 enter(Phase.SAVED)
                 shouldSave = false
             }
+            Event.COUNTDOWN_TICK -> { /* handled by countdown driver */ }
         }
         return snapshot()
     }
